@@ -24,7 +24,7 @@
       box-shadow:0 8px 20px rgba(0,0,0,0.15);
       padding:30px;
       width:100%;
-      max-width:480px;
+      max-width:520px;
       text-align:center;
       animation: fadeIn 0.5s ease;
     }
@@ -65,18 +65,14 @@
       transition:0.3s;
       padding:12px;
       position:relative;
+      border-radius:10px;
     }
     button:hover { background:#ff4f8c; transform:translateY(-2px); }
-    .add-btn {
-      background:#ffb347;
-    }
+    .add-btn { background:#ffb347; }
     .add-btn:hover { background:#ff9933; }
 
     /* Spinner */
-    .loading {
-      pointer-events: none;
-      opacity: 0.7;
-    }
+    .loading { pointer-events: none; opacity: 0.7; }
     .loading::after {
       content: "";
       position: absolute;
@@ -94,6 +90,24 @@
       from { transform: translateY(-50%) rotate(0deg); }
       to { transform: translateY(-50%) rotate(360deg); }
     }
+
+    #productList div {
+      margin:10px 0;
+      padding:10px;
+      background:#fff;
+      border-radius:10px;
+      box-shadow:0 2px 5px rgba(0,0,0,0.1);
+      text-align:left;
+    }
+    #productList button {
+      margin-top:5px;
+      margin-right:5px;
+      padding:8px 12px;
+      border-radius:8px;
+      font-size:13px;
+    }
+    .delete-btn { background:#ff4f4f; }
+    .delete-btn:hover { background:#cc0000; }
   </style>
 </head>
 <body>
@@ -106,8 +120,9 @@
     </form>
 
     <div id="adminPanel" style="display:none;">
-      <h2>INPUT PRODUK</h2>
+      <h2 id="formTitle">INPUT PRODUK</h2>
       <form id="productForm">
+        <input type="hidden" id="row"> <!-- dipakai saat edit -->
         <input type="text" id="nama" placeholder="Nama Produk" required><br>
         <input type="number" id="harga" placeholder="Harga Produk" required><br>
 
@@ -119,14 +134,19 @@
         </div>
         <button type="button" class="add-btn" onclick="addTopping()">+ Tambah Topping</button><br>
 
-        <input type="file" id="foto" accept="image/*" required><br>
+        <input type="file" id="foto" accept="image/*"><br>
         <button type="submit" id="saveBtn">Simpan Produk</button>
       </form>
+
+      <h2>Daftar Produk</h2>
+      <div id="productList"></div>
     </div>
   </div>
 
   <script>
     const GAS_URL = "https://script.google.com/macros/s/AKfycbz8OQ2w68DXtXbYudR8nxV9KcruIl5iNQHFHG4ISOjg3S8W1X9ps8mw8U9H7hwqzIIN/exec"; // ganti pake URL GAS
+
+    let editMode = false; // apakah form sedang edit
 
     // LOGIN
     document.getElementById("loginForm").addEventListener("submit", async (e)=>{
@@ -146,6 +166,7 @@
       if(data.success){
         document.getElementById("loginForm").style.display="none";
         document.getElementById("adminPanel").style.display="block";
+        loadProducts();
       } else {
         alert("Login gagal!");
       }
@@ -173,15 +194,16 @@
       });
     }
 
-    // FORM TAMBAH PRODUK
+    // FORM TAMBAH / UPDATE PRODUK
     document.getElementById("productForm").addEventListener("submit", async (e)=>{
       e.preventDefault();
       let btn = document.getElementById("saveBtn");
       btn.classList.add("loading");
-      btn.innerText = "Menyimpan...";
+      btn.innerText = editMode ? "Mengupdate..." : "Menyimpan...";
 
       let nama = document.getElementById("nama").value;
       let harga = document.getElementById("harga").value;
+      let row = document.getElementById("row").value;
 
       // Gabung semua topping
       let toppingEls = document.querySelectorAll(".topping-group");
@@ -195,32 +217,107 @@
       });
 
       let fotoFile = document.getElementById("foto").files[0];
-      let fotoBase64 = await toBase64(fotoFile);
+      let fotoBase64 = fotoFile ? await toBase64(fotoFile) : "";
 
       let formData = new URLSearchParams();
+      formData.append("action", editMode ? "edit" : "add");
       formData.append("nama", nama);
       formData.append("harga", harga);
       formData.append("topings", JSON.stringify(topings));
-      formData.append("foto", fotoBase64);
+      if(editMode) formData.append("row", row);
+      if(fotoBase64) formData.append("foto", fotoBase64);
 
       let res = await fetch(GAS_URL, { method: "POST", body: formData });
       let data = await res.json();
 
       btn.classList.remove("loading");
-      btn.innerText = "Simpan Produk";
+      btn.innerText = editMode ? "Update Produk" : "Simpan Produk";
 
       if(data.success){
-        alert("Yeay sudah ditambahkan Produkmu!\nSemangat Berniaga");
-        document.getElementById("productForm").reset();
-        document.getElementById("toppingContainer").innerHTML = `
-          <div class="row topping-group">
-            <input type="text" class="topping-name" placeholder="Nama Topping">
-            <input type="number" class="topping-price" placeholder="Harga">
-          </div>`;
+        alert(editMode ? "Produk berhasil diupdate!" : "Produk berhasil ditambahkan!");
+        resetForm();
+        loadProducts();
       } else {
-        alert("Gagal tambah produk");
+        alert("Gagal simpan produk");
       }
     });
+
+    // Reset form kembali ke mode tambah
+    function resetForm(){
+      document.getElementById("productForm").reset();
+      document.getElementById("toppingContainer").innerHTML = `
+        <div class="row topping-group">
+          <input type="text" class="topping-name" placeholder="Nama Topping">
+          <input type="number" class="topping-price" placeholder="Harga">
+        </div>`;
+      editMode = false;
+      document.getElementById("formTitle").innerText = "INPUT PRODUK";
+      document.getElementById("saveBtn").innerText = "Simpan Produk";
+      document.getElementById("row").value = "";
+    }
+
+    // Load daftar produk
+    async function loadProducts(){
+      let res = await fetch(GAS_URL+"?action=getMenu");
+      let data = await res.json();
+      let list = document.getElementById("productList");
+      list.innerHTML = "";
+      data.forEach((item)=>{
+        let div = document.createElement("div");
+        div.innerHTML = `
+          <strong>${item.Nama}</strong> - Rp${item.Harga}<br>
+          <small>Topping: ${item.Topping||"-"}</small><br>
+          <button onclick="editProduct(${item.Row}, '${item.Nama}', '${item.Harga}', '${item.Topping||""}', '${item.FotoURL}')">✏️ Edit</button>
+          <button onclick="deleteProduct(${item.Row})" class="delete-btn">🗑 Hapus</button>
+        `;
+        list.appendChild(div);
+      });
+    }
+
+    // Fungsi hapus produk
+    async function deleteProduct(row){
+      if(!confirm("Yakin mau hapus produk ini?")) return;
+      let formData = new URLSearchParams();
+      formData.append("action", "delete");
+      formData.append("row", row);
+
+      let res = await fetch(GAS_URL, { method:"POST", body: formData });
+      let data = await res.json();
+
+      if(data.success){
+        alert("Produk berhasil dihapus!");
+        loadProducts();
+      } else {
+        alert("Gagal hapus produk!");
+      }
+    }
+
+    // Fungsi edit produk
+    function editProduct(row, nama, harga, topping, foto){
+      editMode = true;
+      document.getElementById("formTitle").innerText = "EDIT PRODUK";
+      document.getElementById("saveBtn").innerText = "Update Produk";
+      document.getElementById("row").value = row;
+      document.getElementById("nama").value = nama;
+      document.getElementById("harga").value = harga;
+
+      // isi topping
+      document.getElementById("toppingContainer").innerHTML = "";
+      if(topping && topping !== ""){
+        topping.split(",").forEach(t => {
+          let [namaT, hargaT] = t.split(":");
+          let div = document.createElement("div");
+          div.className = "row topping-group";
+          div.innerHTML = `
+            <input type="text" class="topping-name" value="${namaT.trim()}" placeholder="Nama Topping">
+            <input type="number" class="topping-price" value="${hargaT?hargaT.trim():""}" placeholder="Harga">
+          `;
+          document.getElementById("toppingContainer").appendChild(div);
+        });
+      } else {
+        addTopping();
+      }
+    }
   </script>
 </body>
 </html>
