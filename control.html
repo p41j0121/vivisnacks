@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin - Vivi Snacks</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: #fff0f5;
+      margin:0;
+      padding:0;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      min-height:100vh;
+    }
+    .card {
+      background: linear-gradient(135deg, #fff0f5, #ffe4e1);
+      border-radius:20px;
+      box-shadow:0 8px 20px rgba(0,0,0,0.15);
+      padding:30px;
+      width:100%;
+      max-width:480px;
+      text-align:center;
+      animation: fadeIn 0.5s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity:0; transform:scale(0.9); }
+      to { opacity:1; transform:scale(1); }
+    }
+    h2 {
+      font-family: 'Fredoka One', cursive;
+      color:#ff6fa5;
+      margin-bottom:20px;
+      text-shadow:1px 1px #ffc1d6;
+    }
+    input, button {
+      margin:8px 0;
+      padding:12px;
+      border-radius:12px;
+      border:1px solid #ddd;
+      font-size:14px;
+    }
+    input {
+      width:100%;
+      outline:none;
+    }
+    .row {
+      display:flex;
+      gap:10px;
+      margin-bottom:8px;
+    }
+    .row input { flex:1; }
+
+    button {
+      background:#ff6fa5;
+      color:white;
+      border:none;
+      font-weight:bold;
+      cursor:pointer;
+      transition:0.3s;
+      padding:12px;
+      position:relative;
+    }
+    button:hover { background:#ff4f8c; transform:translateY(-2px); }
+    .add-btn {
+      background:#ffb347;
+    }
+    .add-btn:hover { background:#ff9933; }
+
+    /* Spinner */
+    .loading {
+      pointer-events: none;
+      opacity: 0.7;
+    }
+    .loading::after {
+      content: "";
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      border: 2px solid white;
+      border-top: 2px solid transparent;
+      border-radius: 50%;
+      width: 16px;
+      height: 16px;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+      from { transform: translateY(-50%) rotate(0deg); }
+      to { transform: translateY(-50%) rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>🍩Control Panel🍩</h2>
+    <form id="loginForm">
+      <input type="text" id="user" placeholder="Username" required><br>
+      <input type="password" id="pass" placeholder="Password" required><br>
+      <button type="submit" id="loginBtn">Login</button>
+    </form>
+
+    <div id="adminPanel" style="display:none;">
+      <h2>INPUT PRODUK</h2>
+      <form id="productForm">
+        <input type="text" id="nama" placeholder="Nama Produk" required><br>
+        <input type="number" id="harga" placeholder="Harga Produk" required><br>
+
+        <div id="toppingContainer">
+          <div class="row topping-group">
+            <input type="text" class="topping-name" placeholder="Nama Topping">
+            <input type="number" class="topping-price" placeholder="Harga">
+          </div>
+        </div>
+        <button type="button" class="add-btn" onclick="addTopping()">+ Tambah Topping</button><br>
+
+        <input type="file" id="foto" accept="image/*" required><br>
+        <button type="submit" id="saveBtn">Simpan Produk</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbz8OQ2w68DXtXbYudR8nxV9KcruIl5iNQHFHG4ISOjg3S8W1X9ps8mw8U9H7hwqzIIN/exec"; // ganti pake URL GAS
+
+    // LOGIN
+    document.getElementById("loginForm").addEventListener("submit", async (e)=>{
+      e.preventDefault();
+      let btn = document.getElementById("loginBtn");
+      btn.classList.add("loading");
+      btn.innerText = "Login...";
+      let user = document.getElementById("user").value;
+      let pass = document.getElementById("pass").value;
+
+      let res = await fetch(GAS_URL+"?action=login&user="+user+"&pass="+pass);
+      let data = await res.json();
+
+      btn.classList.remove("loading");
+      btn.innerText = "Login";
+
+      if(data.success){
+        document.getElementById("loginForm").style.display="none";
+        document.getElementById("adminPanel").style.display="block";
+      } else {
+        alert("Login gagal!");
+      }
+    });
+
+    // Tambah field topping
+    function addTopping(){
+      const toppingContainer = document.getElementById("toppingContainer");
+      let div = document.createElement("div");
+      div.className = "row topping-group";
+      div.innerHTML = `
+        <input type="text" class="topping-name" placeholder="Nama Topping">
+        <input type="number" class="topping-price" placeholder="Harga">
+      `;
+      toppingContainer.appendChild(div);
+    }
+
+    // Konversi file → Base64
+    function toBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result.split(",")[1]);
+        reader.onerror = error => reject(error);
+      });
+    }
+
+    // FORM TAMBAH PRODUK
+    document.getElementById("productForm").addEventListener("submit", async (e)=>{
+      e.preventDefault();
+      let btn = document.getElementById("saveBtn");
+      btn.classList.add("loading");
+      btn.innerText = "Menyimpan...";
+
+      let nama = document.getElementById("nama").value;
+      let harga = document.getElementById("harga").value;
+
+      // Gabung semua topping
+      let toppingEls = document.querySelectorAll(".topping-group");
+      let topings = [];
+      toppingEls.forEach(el => {
+        let name = el.querySelector(".topping-name").value.trim();
+        let price = el.querySelector(".topping-price").value.trim();
+        if(name !== "" && price !== ""){
+          topings.push({nama:name, harga:price});
+        }
+      });
+
+      let fotoFile = document.getElementById("foto").files[0];
+      let fotoBase64 = await toBase64(fotoFile);
+
+      let formData = new URLSearchParams();
+      formData.append("nama", nama);
+      formData.append("harga", harga);
+      formData.append("topings", JSON.stringify(topings));
+      formData.append("foto", fotoBase64);
+
+      let res = await fetch(GAS_URL, { method: "POST", body: formData });
+      let data = await res.json();
+
+      btn.classList.remove("loading");
+      btn.innerText = "Simpan Produk";
+
+      if(data.success){
+        alert("Yeay sudah ditambahkan Produkmu!\nSemangat Berniaga");
+        document.getElementById("productForm").reset();
+        document.getElementById("toppingContainer").innerHTML = `
+          <div class="row topping-group">
+            <input type="text" class="topping-name" placeholder="Nama Topping">
+            <input type="number" class="topping-price" placeholder="Harga">
+          </div>`;
+      } else {
+        alert("Gagal tambah produk");
+      }
+    });
+  </script>
+</body>
+</html>

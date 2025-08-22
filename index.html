@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VIVI SNACKS</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background: #fff0f5;
+      color: #333;
+    }
+    h1 {
+      font-family: 'Fredoka One', cursive;
+      font-size: 2.5rem;
+      color: #ff6fa5;
+      text-align: center;
+      margin: 15px 0;
+      text-shadow: 2px 2px #ffc1d6;
+    }
+
+    /* Loader */
+    #loader {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: #fff0f5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      font-family: 'Fredoka One', cursive;
+      font-size: 2rem;
+      color: #ff6fa5;
+      z-index: 9999;
+    }
+    #loader span {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1rem;
+      margin-top: 10px;
+      color: #777;
+    }
+
+    /* Menu grid */
+    .menu-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      padding: 15px;
+    }
+    .card {
+      background: #fff;
+      border-radius: 20px;
+      box-shadow: 0 4px 12px rgba(255, 111, 165, 0.2);
+      overflow: hidden;
+      transition: 0.3s;
+      display:flex;
+      flex-direction:column;
+    }
+    .card:hover { transform: translateY(-5px) scale(1.03); }
+    .card img {
+      width: 100%;
+      height: 150px;
+      object-fit: cover;
+      cursor:pointer;
+    }
+    .card h3 { margin: 10px 0 5px; font-size:1rem; text-align:center; color:#ff6fa5; }
+    .card p { margin: 0 0 10px; font-weight: bold; text-align:center; color: #ff85b2; }
+
+    /* Popup umum */
+    .popup {
+      position: fixed;
+      top:0; left:0; right:0; bottom:0;
+      background: rgba(0,0,0,0.5);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index:1000;
+    }
+    .popup-content {
+      background: linear-gradient(135deg, #fff0f5, #ffe4e1);
+      padding:20px;
+      border-radius:20px;
+      max-width:350px;
+      width:90%;
+      text-align:center;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+      animation: popIn 0.3s ease;
+    }
+    @keyframes popIn {
+      from { transform: scale(0.8); opacity:0; }
+      to { transform: scale(1); opacity:1; }
+    }
+    .popup h3 {margin:5px 0; color:#ff6fa5;}
+    .popup h4 {margin:5px 0 10px; color:#ff85b2;}
+    .topping-option {
+      display:flex;
+      align-items:center;
+      margin:5px 0;
+      font-size:0.9rem;
+    }
+    .topping-option input { margin-right:8px; }
+
+    /* Tombol gemes */
+    .btn {
+      display: inline-block;
+      margin: 8px;
+      padding: 12px 20px;
+      background: #ff6fa5;
+      color: white;
+      border-radius: 25px;
+      font-weight: bold;
+      border: none;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .btn:hover { background: #ff4f8c; transform: translateY(-2px); }
+    .btn.cancel {
+      background: #bbb;
+    }
+    .btn.cancel:hover {
+      background: #999;
+    }
+
+    /* Cart button */
+    #cart-btn {
+      position:fixed;
+      bottom:20px;
+      right:20px;
+      background:#ff6fa5;
+      color:white;
+      border-radius:50%;
+      width:65px; height:65px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:1.6rem;
+      cursor:pointer;
+      box-shadow:0 4px 12px rgba(0,0,0,0.3);
+    }
+    #cart-count {
+      position:absolute;
+      top:10px;
+      right:10px;
+      background:#ff4f8c;
+      color:white;
+      border-radius:50%;
+      padding:2px 6px;
+      font-size:0.8rem;
+    }
+
+    /* Cart popup */
+    #cart-popup .popup-content {
+      max-width:400px;
+    }
+    .cart-item { 
+      display:block; 
+      margin:12px 0; 
+      font-size:0.9rem;
+      text-align:left;
+      padding:10px;
+      background:#fff;
+      border-radius:12px;
+      box-shadow:0 2px 6px rgba(0,0,0,0.1);
+      position: relative;
+    }
+    .cart-item strong {
+      display:block;
+      margin-bottom:5px;
+      font-size:1rem;
+      color:#ff4f8c;
+    }
+    .cart-item small {
+      display:block;
+      color:#555;
+      margin-left:10px;
+    }
+    .cart-item .subtotal {
+      margin-top:5px;
+      font-weight:bold;
+      color:#333;
+    }
+    .cart-item button {
+      position:absolute;
+      top:10px;
+      right:10px;
+      background:#ff4f8c;
+      color:white;
+      border:none;
+      border-radius:50%;
+      width:24px;
+      height:24px;
+      cursor:pointer;
+      font-weight:bold;
+    }
+    .total-all {
+      margin-top: 10px;
+      font-weight: bold;
+      color: #ff4f8c;
+    }
+  </style>
+</head>
+<body>
+  <div id="loader">Vivi Snacks<br><span>Loading...</span></div>
+  <h1>VIVI SNACKS</h1>
+  <div class="menu-container" id="menu"></div>
+
+  <!-- Popup topping -->
+  <div class="popup" id="toppingPopup">
+    <div class="popup-content">
+      <h3 id="popupProduct"></h3>
+      <h4>Tambah Extra Topping</h4>
+      <div id="toppingList"></div>
+      <p id="totalPrice" style="font-weight:bold; margin:10px 0;">Total: Rp0</p>
+      <button class="btn" onclick="addToCart()">🍰 Tambah Pesanan</button>
+      <button class="btn cancel" onclick="closePopup()">✖ Batal</button>
+    </div>
+  </div>
+
+  <!-- Cart Button -->
+  <div id="cart-btn" onclick="openCart()">
+    🛒
+    <div id="cart-count">0</div>
+  </div>
+
+  <!-- Cart Popup -->
+  <div class="popup" id="cart-popup">
+    <div class="popup-content">
+      <h3>Keranjang</h3>
+      <div id="cartItems"></div>
+      <p class="total-all" id="cartTotal">Total: Rp0</p>
+      <button class="btn" onclick="checkout()">✅ Checkout</button>
+      <button class="btn cancel" onclick="closeCart()">✖ Tutup</button>
+    </div>
+  </div>
+
+  <script>
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbz8OQ2w68DXtXbYudR8nxV9KcruIl5iNQHFHG4ISOjg3S8W1X9ps8mw8U9H7hwqzIIN/exec"; // ganti pake URL GAS publish
+    const WA_NUMBER = "6281234567890"; 
+
+    let currentProduct = null;
+    let cart = [];
+
+    // loader
+    window.addEventListener("load", ()=>{
+      setTimeout(()=>{ 
+        document.getElementById("loader").style.display="none"; 
+      }, 1000);
+    });
+
+    async function loadMenu() {
+      let res = await fetch(GAS_URL+"?action=getMenu");
+      let data = await res.json();
+      let menuDiv = document.getElementById("menu");
+
+      data.forEach(item => {
+        let foto = item.FotoURL;
+        if (!foto.includes("lh3.googleusercontent.com")) {
+          let idMatch = foto.match(/[-\w]{25,}/);
+          if (idMatch) foto = "https://lh3.googleusercontent.com/d/" + idMatch[0] + "=s600";
+        }
+        let card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+          <img src="${foto}" alt="${item.Nama}" onclick='openTopping(${JSON.stringify(item)})'>
+          <h3>${item.Nama}</h3>
+          <p>Rp ${item.Harga}</p>
+        `;
+        menuDiv.appendChild(card);
+      });
+    }
+    loadMenu();
+
+    function openTopping(item){
+      currentProduct = item;
+      document.getElementById("popupProduct").innerText = `${item.Nama} - Rp${item.Harga}`;
+      let toppingList = document.getElementById("toppingList");
+      toppingList.innerHTML = "";
+
+      if(item.Topping){
+        let tops = item.Topping.split(",").map(t=>t.trim());
+        tops.forEach(t=>{
+          let [nama,harga] = t.split(":");
+          let div = document.createElement("div");
+          div.className="topping-option";
+          div.innerHTML = `
+            <label>
+              <input type="checkbox" value="${harga}" onchange="updateTotal()">
+              ${nama} (+Rp${harga})
+            </label>
+          `;
+          toppingList.appendChild(div);
+        });
+      }
+
+      updateTotal();
+      document.getElementById("toppingPopup").style.display="flex";
+    }
+    function closePopup(){ document.getElementById("toppingPopup").style.display="none"; }
+
+    function updateTotal(){
+      let base = parseInt(currentProduct.Harga);
+      let checks = document.querySelectorAll("#toppingList input:checked");
+      let extra = 0;
+      checks.forEach(c=> extra += parseInt(c.value));
+      let total = base + extra;
+      document.getElementById("totalPrice").innerText = `Total: Rp${total}`;
+    }
+
+    function addToCart(){
+      let base = parseInt(currentProduct.Harga);
+      let checks = document.querySelectorAll("#toppingList input:checked");
+      let toppings = [];
+      let extra = 0;
+      checks.forEach(c=>{
+        let txt = c.parentElement.innerText.trim();
+        toppings.push(txt);
+        extra += parseInt(c.value);
+      });
+      let total = base + extra;
+
+      cart.push({ 
+        nama: currentProduct.Nama, 
+        harga: base, 
+        toppings,
+        total: total
+      });
+      updateCartCount();
+      closePopup();
+    }
+
+    function updateCartCount(){
+      document.getElementById("cart-count").innerText = cart.length;
+    }
+
+    function openCart(){
+      let cartItems = document.getElementById("cartItems");
+      cartItems.innerHTML = "";
+      let grandTotal = 0;
+      cart.forEach((c,i)=>{
+        grandTotal += c.total;
+        let div = document.createElement("div");
+        div.className="cart-item";
+        div.innerHTML = `
+          <strong>${c.nama} - Rp${c.harga}</strong>
+          ${c.toppings.length>0 ? c.toppings.map(t=>`<small>➕ ${t}</small>`).join("") : ""}
+          <div class="subtotal">Total Item: Rp${c.total}</div>
+          <button onclick="removeItem(${i})">×</button>
+        `;
+        cartItems.appendChild(div);
+      });
+      document.getElementById("cartTotal").innerText = `Total: Rp${grandTotal}`;
+      document.getElementById("cart-popup").style.display="flex";
+    }
+    function closeCart(){ document.getElementById("cart-popup").style.display="none"; }
+
+    function removeItem(index){
+      cart.splice(index,1);
+      updateCartCount();
+      openCart();
+    }
+
+    function checkout(){
+      let text = "Halo saya mau pesan:\n";
+      let grandTotal = 0;
+      cart.forEach(c=>{
+        text += `🍩 ${c.nama} - Rp${c.harga}\n`;
+        if(c.toppings.length>0){
+          text += `   ➕ Topping:\n`;
+          c.toppings.forEach(t=> text += `      - ${t}\n`);
+        }
+        text += `   Subtotal: Rp${c.total}\n\n`;
+        grandTotal += c.total;
+      });
+      text += `====================\n`;
+      text += `Total Keseluruhan: Rp${grandTotal}`;
+      window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(text)}`,"_blank");
+    }
+  </script>
+</body>
+</html>
