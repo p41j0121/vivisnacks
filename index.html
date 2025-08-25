@@ -406,21 +406,23 @@
     }
 
     function validateForm(){
-      let name = document.getElementById("custName").value.trim();
-      let addr = document.getElementById("custAddress").value.trim();
-      document.getElementById("checkoutBtn").disabled = !(name && addr);
-    }
+  let name = document.getElementById("custName").value.trim();
+  let addr = document.getElementById("custAddress").value.trim();
+  document.getElementById("checkoutBtn").disabled = !(name && addr);
+}
 
-    function openPaymentPopup(){
-      document.getElementById("cart-popup").style.display="none";
-      document.getElementById("payment-popup").style.display="flex";
-       if(!name || !addr){
+function openPaymentPopup(){
+  let name = document.getElementById("custName").value.trim();
+  let addr = document.getElementById("custAddress").value.trim();
+
+  if(!name || !addr){
     alert("⚠️ Silakan isi Nama dan Alamat terlebih dahulu!");
     return; // hentikan proses
-    }
-    function closePaymentPopup(){
-      document.getElementById("payment-popup").style.display="none";
-    }
+  }
+
+  document.getElementById("cart-popup").style.display="none";
+  document.getElementById("payment-popup").style.display="flex";
+}
 
     function toggleBank(){
       let method = document.querySelector('input[name="payMethod"]:checked').value;
@@ -464,6 +466,7 @@
   </footer>
 </body>
 </html>
+
 
 
 
