@@ -85,7 +85,7 @@
       background: linear-gradient(135deg, #fff0f5, #ffe4e1);
       padding:20px;
       border-radius:20px;
-      max-width:350px;
+      max-width:400px;
       width:90%;
       text-align:center;
       box-shadow: 0 6px 20px rgba(0,0,0,0.2);
@@ -129,7 +129,7 @@
     /* Cart button */
     #cart-btn {
       position:fixed;
-      bottom:70px;
+      bottom:20px;
       right:20px;
       background:#ff6fa5;
       color:white;
@@ -233,14 +233,51 @@
       <h3>Keranjang</h3>
       <div id="cartItems"></div>
       <p class="total-all" id="cartTotal">Total: Rp0</p>
-      <button class="btn" onclick="checkout()">✅ Checkout</button>
+
+      <!-- Input Nama & Alamat -->
+      <input id="custName" type="text" placeholder="Nama Anda" style="width:100%;padding:8px;margin:5px 0;border-radius:8px;border:1px solid #ccc;">
+      <input id="custAddress" type="text" placeholder="Alamat Lengkap" style="width:100%;padding:8px;margin:5px 0;border-radius:8px;border:1px solid #ccc;">
+
+      <button class="btn" id="checkoutBtn" onclick="openPaymentPopup()" disabled>✅ Checkout</button>
       <button class="btn cancel" onclick="closeCart()">✖ Tutup</button>
     </div>
   </div>
 
+  <!-- Payment Popup -->
+  <div class="popup" id="payment-popup">
+    <div class="popup-content" style="text-align:left;">
+      <h3 style="text-align:center;">Metode Pembayaran</h3>
+
+      <div style="margin:10px 0;">
+        <label style="display:flex;align-items:center;gap:6px;">
+          <input type="radio" name="payMethod" value="Transfer" onchange="toggleBank()"> Transfer
+        </label>
+        <div id="bankOptions" style="display:none; margin:8px 0 12px 20px;">
+          <select id="bankSelect" style="width:100%;padding:8px;border-radius:8px;border:1px solid #ccc;">
+            <option value="BCA - 123456789">BCA - 123456789</option>
+            <option value="BRI - 987654321">BRI - 987654321</option>
+            <option value="Mandiri - 555111222">Mandiri - 555111222</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="margin:10px 0;">
+        <label style="display:flex;align-items:center;gap:6px;">
+          <input type="radio" name="payMethod" value="Cash" onchange="toggleBank()"> Cash
+        </label>
+        <p id="cashNote" style="display:none;color:#555;margin:8px 0 0 20px;">💵 Siapkan uang pas saat pesanan diterima</p>
+      </div>
+
+      <div style="text-align:center;margin-top:15px;">
+        <button class="btn" onclick="checkout()">📩 Pesan</button>
+        <button class="btn cancel" onclick="closePaymentPopup()">✖ Batal</button>
+      </div>
+    </div>
+  </div>
+
   <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbz8OQ2w68DXtXbYudR8nxV9KcruIl5iNQHFHG4ISOjg3S8W1X9ps8mw8U9H7hwqzIIN/exec"; // ganti pake URL GAS publish
-    const WA_NUMBER = "6283830611232"; 
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbz8OQ2w68DXtXbYudR8nxV9KcruIl5iNQHFHG4ISOjg3S8W1X9ps8mw8U9H7hwqzIIN/exec"; 
+    const WA_NUMBER = "6281234567890"; 
 
     let currentProduct = null;
     let cart = [];
@@ -355,6 +392,10 @@
       });
       document.getElementById("cartTotal").innerText = `Total: Rp${grandTotal}`;
       document.getElementById("cart-popup").style.display="flex";
+
+      // enable/disable checkout
+      document.getElementById("custName").addEventListener("input", validateForm);
+      document.getElementById("custAddress").addEventListener("input", validateForm);
     }
     function closeCart(){ document.getElementById("cart-popup").style.display="none"; }
 
@@ -364,8 +405,34 @@
       openCart();
     }
 
+    function validateForm(){
+      let name = document.getElementById("custName").value.trim();
+      let addr = document.getElementById("custAddress").value.trim();
+      document.getElementById("checkoutBtn").disabled = !(name && addr);
+    }
+
+    function openPaymentPopup(){
+      document.getElementById("cart-popup").style.display="none";
+      document.getElementById("payment-popup").style.display="flex";
+    }
+    function closePaymentPopup(){
+      document.getElementById("payment-popup").style.display="none";
+    }
+
+    function toggleBank(){
+      let method = document.querySelector('input[name="payMethod"]:checked').value;
+      document.getElementById("bankOptions").style.display = (method=="Transfer") ? "block" : "none";
+      document.getElementById("cashNote").style.display = (method=="Cash") ? "block" : "none";
+    }
+
     function checkout(){
-      let text = "Halo saya mau pesan:\n";
+      let name = document.getElementById("custName").value.trim();
+      let addr = document.getElementById("custAddress").value.trim();
+      let method = document.querySelector('input[name="payMethod"]:checked');
+      if(!method){ alert("Pilih metode pembayaran!"); return; }
+      method = method.value;
+
+      let text = `Halo, saya mau pesan:\n`;
       let grandTotal = 0;
       cart.forEach(c=>{
         text += `🍩 ${c.nama} - Rp${c.harga}\n`;
@@ -377,17 +444,20 @@
         grandTotal += c.total;
       });
       text += `====================\n`;
-      text += `Total Keseluruhan: Rp${grandTotal}`;
+      text += `Total Keseluruhan: Rp${grandTotal}\n\n`;
+      text += `👤 Nama: ${name}\n🏠 Alamat: ${addr}\n💳 Pembayaran: ${method}`;
+
+      if(method=="Transfer"){
+        let bank = document.getElementById("bankSelect").value;
+        text += `\n🏦 Bank: ${bank}`;
+      }
+
       window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(text)}`,"_blank");
     }
   </script>
-  </div> <!-- penutup .card -->
 
   <footer style="position:fixed; bottom:0; left:0; width:100%; text-align:center; padding:10px; background:#ffe4ec; color:#ff4f8c; font-size:14px; font-weight:600; border-top:2px solid #ffb6c1;">
     🍩 Vivi Snacks |Citra Amarta Blok H16 | Made with ❤️ |Enjoy Eat
   </footer>
 </body>
 </html>
-
-
-
