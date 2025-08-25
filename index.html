@@ -408,6 +408,9 @@
     function validateForm(){
       let name = document.getElementById("custName").value.trim();
       let addr = document.getElementById("custAddress").value.trim();
+       if(!name || !addr){
+    alert("⚠️ Silakan isi Nama dan Alamat terlebih dahulu!");
+    return; // hentikan proses
       document.getElementById("checkoutBtn").disabled = !(name && addr);
     }
 
@@ -461,4 +464,5 @@
   </footer>
 </body>
 </html>
+
 
