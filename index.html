@@ -408,15 +408,15 @@
     function validateForm(){
       let name = document.getElementById("custName").value.trim();
       let addr = document.getElementById("custAddress").value.trim();
-       if(!name || !addr){
-    alert("⚠️ Silakan isi Nama dan Alamat terlebih dahulu!");
-    return; // hentikan proses
       document.getElementById("checkoutBtn").disabled = !(name && addr);
     }
 
     function openPaymentPopup(){
       document.getElementById("cart-popup").style.display="none";
       document.getElementById("payment-popup").style.display="flex";
+       if(!name || !addr){
+    alert("⚠️ Silakan isi Nama dan Alamat terlebih dahulu!");
+    return; // hentikan proses
     }
     function closePaymentPopup(){
       document.getElementById("payment-popup").style.display="none";
@@ -464,5 +464,6 @@
   </footer>
 </body>
 </html>
+
 
 
